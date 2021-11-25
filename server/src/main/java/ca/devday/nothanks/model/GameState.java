@@ -5,10 +5,12 @@ import java.util.List;
 import java.util.UUID;
 
 import lombok.Data;
+import lombok.experimental.Accessors;
 
 @Data
+@Accessors(chain = true)
 public class GameState {
-    private UUID id;
+    private String id;
     private List<Card> cards = new ArrayList<>();
     private Card activeCard;
     private int currentPlayerTurn;
@@ -16,9 +18,9 @@ public class GameState {
 
     private GameState() {}
 
-    public static GameState newInstance() {
+    public static GameState newInstance(String gameId) {
         GameState gameState = new GameState();
-        gameState.id = UUID.randomUUID();
+        gameState.id = gameId;
         return gameState;
     }
 }

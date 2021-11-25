@@ -1,4 +1,4 @@
-package ca.devday.nothanks.model.type;
+package ca.devday.nothanks.api.type;
 
 public enum NotificationType {
     LOBBY_CREATED("LOBBY_CREATED"),

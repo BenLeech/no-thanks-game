@@ -1,8 +1,10 @@
 package ca.devday.nothanks.model;
 
 import lombok.Data;
+import lombok.experimental.Accessors;
 
 @Data
+@Accessors(chain = true)
 public class Card {
     private int number;
     private int chips;

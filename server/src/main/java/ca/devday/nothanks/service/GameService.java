@@ -1,23 +1,22 @@
 package ca.devday.nothanks.service;
 
+import ca.devday.nothanks.api.GameMessageDto;
+import ca.devday.nothanks.api.PlayerActionDto;
+import ca.devday.nothanks.api.type.ActionType;
+import ca.devday.nothanks.api.type.NotificationType;
+import ca.devday.nothanks.model.Card;
+import ca.devday.nothanks.model.GameState;
+import ca.devday.nothanks.model.Player;
+import ca.devday.nothanks.repository.GameRepository;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
+import org.springframework.stereotype.Component;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
-
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.messaging.simp.SimpMessagingTemplate;
-import org.springframework.stereotype.Component;
-
-import ca.devday.nothanks.model.Card;
-import ca.devday.nothanks.model.GameState;
-import ca.devday.nothanks.model.Player;
-import ca.devday.nothanks.model.api.GameMessageDto;
-import ca.devday.nothanks.model.api.PlayerActionDto;
-import ca.devday.nothanks.model.type.ActionType;
-import ca.devday.nothanks.model.type.NotificationType;
-import ca.devday.nothanks.repository.GameRepository;
 
 @Component
 public class GameService {
@@ -66,8 +65,8 @@ public class GameService {
          return null;
     }
 
-    public void startGame() {
-        GameState gameState = GameState.newInstance();
+    public void startGame(String gameId) {
+        GameState gameState = GameState.newInstance(gameId);
         gameState.setCards(createCardDeck());
         gameRepository.save(gameState);
         sendGameMessage(gameState.getId(), new GameMessageDto()
@@ -76,12 +75,12 @@ public class GameService {
         drawCard(gameState);
     }
 
-    private void sendGameMessage(UUID gameId, GameMessageDto messageDto) {
-        messagingTemplate.convertAndSend(String.format("/topic/game/%s", gameId.toString()), messageDto);
+    private void sendGameMessage(String gameId, GameMessageDto messageDto) {
+        messagingTemplate.convertAndSend(String.format("/topic/game/%s", gameId), messageDto);
     }
 
     private void sendErrorMessage(String playerId, String error) {
-        messagingTemplate.convertAndSendToUser(playerId, "/topic/errors", 
+        messagingTemplate.convertAndSendToUser(playerId, "/queue/game/errors",
                 new GameMessageDto()
                     .setNotificationType(NotificationType.ERROR)
                     .setPayload(error));

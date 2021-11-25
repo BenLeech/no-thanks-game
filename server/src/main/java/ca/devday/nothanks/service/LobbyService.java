@@ -1,5 +1,10 @@
 package ca.devday.nothanks.service;
 
+import ca.devday.nothanks.api.CreateLobbyDto;
+import ca.devday.nothanks.api.GameMessageDto;
+import ca.devday.nothanks.api.JoinLobbyDto;
+import ca.devday.nothanks.api.type.NotificationType;
+import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -8,11 +13,9 @@ import org.springframework.stereotype.Component;
 
 import ca.devday.nothanks.model.Lobby;
 import ca.devday.nothanks.model.Player;
-import ca.devday.nothanks.model.api.CreateLobbyDto;
-import ca.devday.nothanks.model.api.JoinLobbyDto;
-import ca.devday.nothanks.model.api.GameMessageDto;
-import ca.devday.nothanks.model.type.NotificationType;
 import ca.devday.nothanks.repository.LobbyRepository;
+
+import java.util.UUID;
 
 @Component
 public class LobbyService {
@@ -23,6 +26,9 @@ public class LobbyService {
 
     @Autowired
     private LobbyRepository lobbyRepository;
+
+    @Autowired
+    private GameService gameService;
 
     @Autowired
     private SimpMessagingTemplate messagingTemplate;
@@ -38,7 +44,7 @@ public class LobbyService {
         lobby.setJoinCode(generateUniqueJoinCode());
         lobbyRepository.save(lobby);
 
-        messagingTemplate.convertAndSendToUser(userId, "/topic/lobby", new GameMessageDto()
+        messagingTemplate.convertAndSendToUser(userId, "/queue/lobby", new GameMessageDto()
             .setNotificationType(NotificationType.LOBBY_CREATED)
             .setPayload(lobby.getJoinCode()));
 
@@ -62,12 +68,10 @@ public class LobbyService {
         GameMessageDto messageDto = new GameMessageDto()
             .setNotificationType(NotificationType.PLAYER_JOINED)
             .setPayload(dto.getPlayerName());
-        lobby.getPlayers().forEach(player -> {
-            messagingTemplate.convertAndSendToUser(player.getUserId().toString(), "/topic/notification", messageDto);
-        });
+        lobby.getPlayers().forEach(player -> messagingTemplate.convertAndSendToUser(player.getUserId(), "/queue/lobby", messageDto));
         return new GameMessageDto()
             .setNotificationType(NotificationType.JOINED_LOBBY)
-            .setPayload(dto.getJoinCode());
+            .setPayload(lobby.getJoinCode());
     }
 
     public void handlePlayerLeaving(Lobby lobby, Player player) {
@@ -79,16 +83,42 @@ public class LobbyService {
             .setPayload(player.getName()));    
     }
 
-    public void startGame(String joinCode) {
+    public void startGame(String gameId, String playerId) {
+        Lobby lobby = lobbyRepository.get(gameId);
+        String validation = validateStartGame(lobby, playerId);
+        if(validation != null) {
+            messagingTemplate.convertAndSendToUser(playerId, "/queue/lobby", new GameMessageDto()
+                    .setNotificationType(NotificationType.ERROR)
+                    .setPayload(validation));
+        }
 
+        lobby.setOpen(Boolean.FALSE);
+        lobbyRepository.save(lobby);
+        gameService.startGame(gameId);
+    }
+
+    private String validateStartGame(Lobby lobby, String playerId) {
+        if(lobby == null) {
+            return "Lobby not found";
+        }
+        if(BooleanUtils.isFalse(lobby.getOpen())) {
+            return "The lobby is not open";
+        }
+        if(!playerId.equals(lobby.getHostPlayerId())) {
+            return "Only the host can start the game";
+        }
+        if(lobby.getPlayers().size() < MIN_CAPACITY) {
+            return "Not enough players to start the game";
+        }
+        return null;
     }
 
     private String validateCreateLobby(CreateLobbyDto createLobbyDto) {
         if(createLobbyDto.getCapacity() > MAX_CAPACITY) {
-            return String.format("Capacity cannot be greater than %i", MAX_CAPACITY);
+            return String.format("Capacity cannot be greater than %s", MAX_CAPACITY);
         }
         if(createLobbyDto.getCapacity() < MIN_CAPACITY) {
-            return String.format("Capacity cannot be less than %i", MIN_CAPACITY);
+            return String.format("Capacity cannot be less than %s", MIN_CAPACITY);
         }
         return null;
     }

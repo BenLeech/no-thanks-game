@@ -2,12 +2,12 @@ package ca.devday.nothanks.controller;
 
 import java.security.Principal;
 
+import ca.devday.nothanks.api.PlayerActionDto;
+import ca.devday.nothanks.service.GameService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.stereotype.Controller;
 
-import ca.devday.nothanks.model.api.PlayerActionDto;
-import ca.devday.nothanks.service.GameService;
 
 @Controller
 public class GameController {

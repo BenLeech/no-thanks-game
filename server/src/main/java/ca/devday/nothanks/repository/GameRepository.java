@@ -12,9 +12,9 @@ import ca.devday.nothanks.model.GameState;
 @Component
 public class GameRepository {
     
-    private Map<UUID, GameState> gameStates = new HashMap<>();
+    private Map<String, GameState> gameStates = new HashMap<>();
 
-    public GameState get(UUID gameId) {
+    public GameState get(String gameId) {
         return this.gameStates.get(gameId);
     }
 
@@ -28,7 +28,7 @@ public class GameRepository {
         this.gameStates.put(gameState.getId(), gameState);
     }
 
-    public void remove(UUID gameId) {
+    public void remove(String gameId) {
         this.gameStates.remove(gameId);
     }
 }

@@ -1,4 +1,4 @@
-package ca.devday.nothanks.model.type;
+package ca.devday.nothanks.api.type;
 
 public enum ActionType {
     NO_THANKS("NO_THANKS"),

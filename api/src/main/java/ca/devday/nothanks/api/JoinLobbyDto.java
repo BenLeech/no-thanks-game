@@ -1,4 +1,4 @@
-package ca.devday.nothanks.model.api;
+package ca.devday.nothanks.api;
 
 import lombok.Data;
 import lombok.experimental.Accessors;

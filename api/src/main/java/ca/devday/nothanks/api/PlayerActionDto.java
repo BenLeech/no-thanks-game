@@ -1,14 +1,14 @@
-package ca.devday.nothanks.model.api;
+package ca.devday.nothanks.api;
 
-import java.util.UUID;
-
-import ca.devday.nothanks.model.type.ActionType;
+import ca.devday.nothanks.api.type.ActionType;
 import lombok.Data;
 import lombok.experimental.Accessors;
+
+import java.util.UUID;
 
 @Data
 @Accessors(chain = true)
 public class PlayerActionDto {
-    private UUID gameId;
+    private String gameId;
     private ActionType actionType;
 }
